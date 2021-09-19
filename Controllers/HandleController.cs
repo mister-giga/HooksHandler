@@ -1,5 +1,4 @@
-﻿using HooksHandler.Utils;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
@@ -29,7 +28,7 @@ namespace HooksHandler.Controllers
         {
             _logger.LogInformation($"pushed {target}");
 
-            var file = Path.Combine(EnvVariables.HandlersPath, target);
+            var file = Path.Combine("/handlers", $"{target}.sh");
 
             if (!F.Exists(file))
             {
@@ -70,6 +69,14 @@ namespace HooksHandler.Controllers
             foreach (var item in Request.Query)
                 processInfo.Environment[$"query_{item.Key}"] = item.Value;
 
+            {
+                processInfo.Environment["http_method"] = Request.Method;
+                processInfo.Environment["http_host"] = Request.Host.ToUriComponent();
+                processInfo.Environment["http_contentType"] = Request.ContentType;
+                processInfo.Environment["http_protocol"] = Request.Protocol;
+                processInfo.Environment["http_scheme"] = Request.Scheme;
+            }
+
             var process = Process.Start(processInfo);
             process.WaitForExit();
 
@@ -106,14 +113,17 @@ namespace HooksHandler.Controllers
                         break;
 
                     default:
-                        dict.Add(prefix, ((JValue)token).Value?.ToString() ?? "");
+                        if (dict.ContainsKey(prefix))
+                            Console.WriteLine($"Key already exists, skipping. Key={prefix}");
+                        else
+                            dict.Add(prefix, ((JValue)token).Value?.ToString() ?? "");
                         break;
                 }
             }
 
             private static string Join(string prefix, string name)
             {
-                return (string.IsNullOrEmpty(prefix) ? name : prefix + "_" + name);
+                return (string.IsNullOrEmpty(prefix) ? name : prefix + "__" + name);
             }
         }
     }
