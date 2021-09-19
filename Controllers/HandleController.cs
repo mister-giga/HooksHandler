@@ -39,7 +39,7 @@ namespace HooksHandler.Controllers
 
             var processInfo = new ProcessStartInfo()
             {
-                FileName = "sh",
+                FileName = "/bin/bash",
                 Arguments = file
             };
 
